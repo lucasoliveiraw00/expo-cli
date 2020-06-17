@@ -33,6 +33,7 @@ interface PresignedPost {
   fields: object;
 }
 
+<<<<<<< Updated upstream:packages/expo-cli/src/commands/build-native/Builder.ts
 export interface BuilderContext {
   projectDir: string;
   user: User;
@@ -62,7 +63,38 @@ export default class Builder {
 
   private async ensureProjectExistsAsync(): Promise<string> {
     const { accountName, projectName } = this.ctx;
+||||||| constructed merge base:packages/expo-cli/src/commands/build-native/Builder.ts
+export default class Builder {
+  client: ApiV2;
 
+  constructor(user: User) {
+    this.client = ApiV2.clientForUser(user);
+  }
+
+  async buildProject(projectDir: string, options: Options) {
+    const tarPath = path.join(os.tmpdir(), `${uuid()}.tar.gz`);
+    try {
+      await makeProjectTarball(tarPath);
+
+      const spinner = ora('Uploading project to server.').start();
+      const checksum = await md5File(tarPath);
+      const { presignedUrl } = await this.client.postAsync('upload-sessions', {
+        type: 'turtle-project-sources',
+        checksum,
+      });
+      const publicUrl = await uploadWithPresignedURL(presignedUrl, tarPath);
+      spinner.succeed('Project uploaded.');
+
+      const job = await prepareJob(options.platform, publicUrl, projectDir);
+      const { buildId } = await this.client.postAsync('builds', { job: job as any });
+=======
+interface Builder {
+  ensureCredentials(): Promise<void>;
+  prepareJob(): Promise<Job>;
+}
+>>>>>>> Stashed changes:packages/expo-cli/src/commands/build-native/build.ts
+
+<<<<<<< Updated upstream:packages/expo-cli/src/commands/build-native/Builder.ts
     try {
       const [{ id }] = await this.client.getAsync('projects', {
         experienceName: `@${accountName}/${projectName}`,
@@ -73,13 +105,45 @@ export default class Builder {
         throw err;
       }
     }
+||||||| constructed merge base:packages/expo-cli/src/commands/build-native/Builder.ts
+      return await waitForBuildEnd(this.client, buildId);
+    } finally {
+      await fs.remove(tarPath);
+    }
+  }
+=======
+async function startBuild(builder: Builder): Promise<string> {
+  const tarPath = path.join(os.tmpdir(), `${uuid()}.tar.gz`);
+  try {
+    await makeProjectTarball(tarPath);
+>>>>>>> Stashed changes:packages/expo-cli/src/commands/build-native/build.ts
 
+<<<<<<< Updated upstream:packages/expo-cli/src/commands/build-native/Builder.ts
     const { id } = await this.client.postAsync('projects', {
       accountName,
       projectName,
       privacy: this.ctx.exp.privacy || 'public',
     });
     return id;
+||||||| constructed merge base:packages/expo-cli/src/commands/build-native/Builder.ts
+  async getLatestBuilds(): Promise<StatusResult> {
+    return await this.client.getAsync('builds');
+=======
+    const spinner = ora('Uploading project to server.').start();
+    const checksum = await md5File(tarPath);
+    const { presignedUrl } = await client.postAsync('upload-sessions', {
+      type: 'turtle-project-sources',
+      checksum,
+    });
+    const publicUrl = await uploadWithPresignedURL(presignedUrl, tarPath);
+    spinner.succeed('Project uploaded.');
+
+    const job = await prepareJob(options.platform, publicUrl, projectDir);
+    const { buildId } = await client.postAsync('builds', { job: job as any });
+    return buildId;
+  } finally {
+    await fs.remove(tarPath);
+>>>>>>> Stashed changes:packages/expo-cli/src/commands/build-native/build.ts
   }
 
   private async buildAsync(platform: Platform, projectId: string): Promise<string> {

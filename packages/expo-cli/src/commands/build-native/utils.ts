@@ -8,6 +8,7 @@ import log from '../../log';
 import { printTableJsonArray } from '../utils/cli-table';
 import { BuildInfo } from './Builder';
 
+<<<<<<< Updated upstream
 async function waitForBuildEndAsync(
   client: ApiV2,
   projectId: string,
@@ -47,6 +48,48 @@ async function waitForBuildEndAsync(
 }
 
 async function makeProjectTarballAsync(tarPath: string): Promise<number> {
+||||||| constructed merge base
+async function waitForBuildEnd(
+  client: ApiV2,
+  buildId: string,
+  { timeoutSec = 1800, intervalSec = 30 } = {}
+) {
+  log('Waiting for build to complete. You can press Ctrl+C to exit.');
+  const spinner = ora().start();
+  let time = new Date().getTime();
+  const endTime = time + timeoutSec * 1000;
+  while (time <= endTime) {
+    const buildInfo: BuildInfo = await client.getAsync(`builds/${buildId}`);
+    switch (buildInfo.status) {
+      case 'finished':
+        spinner.succeed('Build finished.');
+        return buildInfo.artifacts?.buildUrl ?? '';
+      case 'in-queue':
+        spinner.text = 'Build queued...';
+        break;
+      case 'in-progress':
+        spinner.text = 'Build in progress...';
+        break;
+      case 'errored':
+        spinner.fail('Build failed.');
+        throw new Error(`Standalone build failed!`);
+      default:
+        spinner.warn('Unknown status.');
+        throw new Error(`Unknown status: ${buildInfo} - aborting!`);
+    }
+    time = new Date().getTime();
+    await delayAsync(intervalSec * 1000);
+  }
+  spinner.warn('Timed out.');
+  throw new Error(
+    'Timeout reached! It is taking longer than expected to finish the build, aborting...'
+  );
+}
+
+async function makeProjectTarball(tarPath: string) {
+=======
+async function makeProjectTarball(tarPath: string) {
+>>>>>>> Stashed changes
   const spinner = ora('Making project tarball').start();
   const changes = (await spawnAsync('git', ['status', '-s'])).stdout;
   if (changes.length > 0) {
